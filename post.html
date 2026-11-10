@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Post-Processing — three-starter</title>
+</head>
+
+<body>
+  <a href="/" class="nav-link">← Home</a>
+
+  <div class="hint-panel">
+    <h2>Post-Processing Pipeline</h2>
+    <p>
+      The 3D scene is rendered into an offscreen target, then run through a stack of full-screen
+      shader passes — bloom, chromatic aberration, grain/vignette/scanlines — before reaching
+      the screen. Drag to orbit. Slide each effect to 0 to bypass it.
+    </p>
+
+    <div class="group">
+      <div class="group-title">UnrealBloom</div>
+      <label>Strength <span class="val" id="v-bloomStrength">0.70</span>
+        <input type="range" id="bloomStrength" min="0" max="2.5" step="0.01" value="0.7">
+      </label>
+      <label>Threshold <span class="val" id="v-bloomThreshold">0.85</span>
+        <input type="range" id="bloomThreshold" min="0" max="1.2" step="0.01" value="0.85">
+      </label>
+      <label>Radius <span class="val" id="v-bloomRadius">0.40</span>
+        <input type="range" id="bloomRadius" min="0" max="1.5" step="0.01" value="0.4">
+      </label>
+    </div>
+
+    <div class="group">
+      <div class="group-title">Chromatic aberration</div>
+      <label>Offset <span class="val" id="v-chroma">0.003</span>
+        <input type="range" id="chroma" min="0" max="0.03" step="0.0005" value="0.003">
+      </label>
+    </div>
+
+    <div class="group">
+      <div class="group-title">Grain / vignette / scanlines</div>
+      <label>Vignette <span class="val" id="v-vig">1.2</span>
+        <input type="range" id="vig" min="0" max="2.5" step="0.05" value="1.2">
+      </label>
+      <label>Grain <span class="val" id="v-grain">0.04</span>
+        <input type="range" id="grain" min="0" max="0.25" step="0.005" value="0.04">
+      </label>
+      <label>Scanlines <span class="val" id="v-scan">0.05</span>
+        <input type="range" id="scan" min="0" max="0.3" step="0.005" value="0.05">
+      </label>
+    </div>
+  </div>
+
+  <script type="module" src="/src/post.js"></script>
+</body>
+
+</html>

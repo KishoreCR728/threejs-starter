@@ -1,0 +1,362 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+  background: #06080d;
+  color: #f0f0f4;
+  font-family: system-ui, sans-serif;
+  height: 100%;
+  overflow: hidden;
+  user-select: none;
+}
+body { cursor: default; }
+body.cursor-grab     { cursor: grab; }
+body.cursor-grabbing { cursor: grabbing; }
+
+canvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  display: block;
+}
+
+.nav-link {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 10;
+  color: #f0f0f4;
+  font-size: 14px;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 8px 14px;
+  border-radius: 999px;
+  text-decoration: none;
+  backdrop-filter: blur(6px);
+}
+.nav-link:hover { background: rgba(0, 0, 0, 0.6); }
+
+/* ──────────────── Sound toggle (bottom-left, igloo-style) ──────────────── */
+.sound-toggle {
+  position: fixed;
+  bottom: 16px;
+  left: 16px;
+  z-index: 11;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #f0f0f4;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-family: 'Courier New', ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition: background 0.2s, border-color 0.2s;
+}
+.sound-toggle:hover {
+  background: rgba(0, 0, 0, 0.6);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+.st-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.35);
+  transition: background 0.25s, box-shadow 0.25s;
+}
+.sound-toggle.is-on .st-dot {
+  background: #88ff8a;
+  box-shadow: 0 0 8px rgba(136, 255, 138, 0.7);
+}
+/* Pulses while audio is awaiting the first user gesture (browser autoplay
+   policy). Cleared by JS once any gesture unlocks the AudioContext. */
+.sound-toggle.is-waiting {
+  animation: st-waiting 1.6s ease-in-out infinite;
+}
+@keyframes st-waiting {
+  0%, 100% { box-shadow: 0 0 0 0    rgba(136, 255, 138, 0.0); }
+  50%      { box-shadow: 0 0 0 8px  rgba(136, 255, 138, 0.18); }
+}
+.st-label { opacity: 0.6; }
+.st-state { opacity: 0.95; min-width: 24px; text-align: left; }
+
+.hud {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  padding: 14px 18px;
+  border-radius: 12px;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 220px;
+}
+.hud-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+}
+.hud-row .k {
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  opacity: 0.6;
+}
+.hud-row .v {
+  opacity: 0.95;
+}
+
+/* ──────────────── DETAIL PANEL — Solo-Leveling banner + floating labels ──────────────── */
+.detail-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  font-family: 'Courier New', ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #f5f5f7;
+}
+.detail-panel.is-open { opacity: 1; }
+.detail-panel.is-open .dp-close,
+.detail-panel.is-open .dp-nav,
+.detail-panel.is-open .dp-float { pointer-events: auto; }
+/* Subtle "scramble re-trigger" affordance on hover */
+.detail-panel.is-open .dp-banner-text,
+.detail-panel.is-open .dp-code,
+.detail-panel.is-open .dp-idx-val,
+.detail-panel.is-open .dp-year { cursor: crosshair; }
+
+/* SVG wire layer — 5 short stubs from object → each label */
+.dp-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.dp-wire {
+  stroke: rgba(255, 255, 255, 0.75);
+  stroke-width: 1;
+  fill: none;
+  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.45));
+  /* JS owns stroke-dasharray + stroke-dashoffset for the draw-in animation */
+}
+/* No connector line for the title banner */
+.dp-wire[data-key="banner"] { display: none; }
+
+/* Floating labels — JS sets transform: translate(x, y) each frame.
+   GSAP animates the inline opacity for the staggered reveal. */
+.dp-float {
+  position: absolute;
+  top: 0;
+  left: 0;
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+}
+
+.dp-code  { font-size: 11px; letter-spacing: 0.22em; opacity: 0.85; }
+.dp-idx   { font-size: 11px; letter-spacing: 0.22em; opacity: 0.85; display: flex; gap: 10px; }
+.dp-idx .dp-line-label { opacity: 0.45; }
+.dp-year  { font-size: 11px; letter-spacing: 0.22em; opacity: 0.85; }
+.dp-desc {
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: none;
+  line-height: 1.55;
+  opacity: 0.72;
+  max-width: 280px;
+  white-space: normal;
+}
+
+/* ─────── Solo-Leveling-style banner: layered wireframe + blueprint grid + glow ─────── */
+.dp-banner {
+  padding: 16px 72px;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  background:
+    linear-gradient(135deg,
+      rgba(20, 24, 36, 0.55) 0%,
+      rgba(255, 255, 255, 0.06) 50%,
+      rgba(20, 24, 36, 0.55) 100%);
+  box-shadow:
+    0 0 28px rgba(255, 255, 255, 0.35),
+    inset 0 0 18px rgba(255, 255, 255, 0.12);
+  /* Slanted parallelogram with chamfered ends — clip the corners off so it
+     reads as the angular blade-banner from the reference. */
+  clip-path: polygon(
+    24px 0, 100% 0,
+    calc(100% - 24px) 100%, 0 100%
+  );
+}
+.dp-banner::before {
+  /* Internal blueprint grid + diagonal flow lines */
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(0deg,
+      transparent 0, transparent 6px,
+      rgba(255, 255, 255, 0.07) 6px, rgba(255, 255, 255, 0.07) 7px),
+    repeating-linear-gradient(90deg,
+      transparent 0, transparent 6px,
+      rgba(255, 255, 255, 0.07) 6px, rgba(255, 255, 255, 0.07) 7px),
+    repeating-linear-gradient(110deg,
+      transparent 0, transparent 22px,
+      rgba(255, 255, 255, 0.05) 22px, rgba(255, 255, 255, 0.05) 23px);
+  pointer-events: none;
+}
+.dp-banner::after {
+  /* Outer offset wire — a second silhouette parallelogram floating around the inner */
+  content: '';
+  position: absolute;
+  inset: -10px -22px -10px -22px;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  clip-path: polygon(
+    32px 0, 100% 0,
+    calc(100% - 32px) 100%, 0 100%
+  );
+  pointer-events: none;
+}
+.dp-banner-text {
+  display: block;
+  font-family: system-ui, sans-serif;
+  font-size: clamp(1.7rem, 4.6vw, 3.8rem);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #ffffff;
+  text-shadow:
+    0 0 14px rgba(255, 255, 255, 0.55),
+    0 0 4px rgba(255, 255, 255, 0.85);
+  position: relative;
+  z-index: 2;
+  white-space: nowrap;
+}
+
+/* ─────── Bottom bar: igloo-style minimal monospace nav ─────── */
+.dp-bar {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 28px;
+  align-items: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.detail-panel.is-open ~ .dp-bar,
+.detail-panel.is-open .dp-bar { opacity: 1; }
+
+.dp-nav, .dp-close {
+  background: none;
+  border: none;
+  color: #f5f5f7;
+  font-family: 'Courier New', ui-monospace, monospace;
+  font-size: 12px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 4px 8px;
+  position: relative;
+  opacity: 0.75;
+  transition: opacity 0.18s, transform 0.18s;
+}
+.dp-nav:hover, .dp-close:hover {
+  opacity: 1;
+  transform: translateY(-1px);
+}
+.dp-close::after {
+  /* Subtle underline indicating "primary action" */
+  content: '';
+  position: absolute;
+  left: 8px; right: 8px; bottom: 0;
+  height: 1px;
+  background: rgba(245, 245, 247, 0.5);
+}
+
+.dp-hint {
+  position: fixed;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Courier New', ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.4);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.detail-panel.is-open ~ .dp-hint,
+.detail-panel.is-open .dp-hint { opacity: 1; }
+
+body.panel-open .hud { opacity: 0; transition: opacity 0.3s; }
+body.panel-open      { cursor: default; }
+
+/* ──────────────── Audio gate (intro "click to enter") ──────────────── */
+.audio-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at center,
+                rgba(8, 12, 22, 0.78) 0%,
+                rgba(2, 4, 10, 0.94) 70%);
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+  transition: opacity 0.6s ease, visibility 0.6s ease;
+  font-family: 'Courier New', ui-monospace, monospace;
+  color: #f0f0f4;
+}
+.audio-gate.is-dismissed {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.ag-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 48px 64px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(0, 0, 0, 0.35);
+  clip-path: polygon(20px 0, 100% 0, calc(100% - 20px) 100%, 0 100%);
+  animation: ag-breathe 2.4s ease-in-out infinite;
+}
+@keyframes ag-breathe {
+  0%, 100% { box-shadow: 0 0 0 0    rgba(255, 255, 255, 0.0); }
+  50%      { box-shadow: 0 0 36px 4px rgba(255, 255, 255, 0.08); }
+}
+.ag-line {
+  font-size: 11px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  opacity: 0.55;
+}
+.ag-cta {
+  font-family: system-ui, sans-serif;
+  font-size: clamp(1.6rem, 3.6vw, 2.6rem);
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-shadow: 0 0 18px rgba(255, 255, 255, 0.45);
+}

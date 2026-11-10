@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Drift — three-starter</title>
+</head>
+
+<body>
+  <!-- Audio gate: browsers block AudioContext until a user gesture, so the
+       page greets visitors with a single full-screen "click to enter" panel.
+       The click both unlocks audio and dissolves the gate. -->
+  <div id="audio-gate" class="audio-gate">
+    <div class="ag-inner">
+      <div class="ag-line ag-top">DRIFT // ARCHIVE</div>
+      <div class="ag-cta">CLICK TO ENTER</div>
+      <div class="ag-line ag-bot">— sound on —</div>
+    </div>
+  </div>
+
+  <a href="/" class="nav-link">← Home</a>
+
+  <button id="sound-toggle" class="sound-toggle" type="button" aria-label="toggle sound">
+    <span class="st-dot"></span>
+    <span class="st-label">SOUND</span>
+    <span class="st-state">OFF</span>
+  </button>
+
+  <div class="hud">
+    <div class="hud-row"><span class="k">drag</span> <span class="v">look around</span></div>
+    <div class="hud-row"><span class="k">scroll</span> <span class="v">swim forward / back</span></div>
+    <div class="hud-row"><span class="k">click</span> <span class="v">dive to that spot</span></div>
+  </div>
+
+  <aside id="detail-panel" class="detail-panel" aria-hidden="true">
+    <!-- SVG wire layer: bent polylines (L-shape) from object → each floating label.
+         Each polyline has 3 points (start, elbow, end). Stroke-dashoffset is
+         driven by JS to animate the line "drawing in". -->
+    <svg class="dp-lines" xmlns="http://www.w3.org/2000/svg">
+      <polyline class="dp-wire" data-key="banner" points="0,0 0,0 0,0" fill="none"/>
+      <polyline class="dp-wire" data-key="code"   points="0,0 0,0 0,0" fill="none"/>
+      <polyline class="dp-wire" data-key="idx"    points="0,0 0,0 0,0" fill="none"/>
+      <polyline class="dp-wire" data-key="year"   points="0,0 0,0 0,0" fill="none"/>
+      <polyline class="dp-wire" data-key="desc"   points="0,0 0,0 0,0" fill="none"/>
+    </svg>
+
+    <!-- Floating labels — JS positions the outer .dp-float each frame.
+         For the banner, the inner div gets its own GSAP-driven slam transform. -->
+    <div class="dp-float dp-banner-wrap" data-key="banner">
+      <div class="dp-banner">
+        <span class="dp-banner-text">—</span>
+      </div>
+    </div>
+    <div class="dp-float dp-code" data-key="code">—</div>
+    <div class="dp-float dp-idx"  data-key="idx">
+      <span class="dp-line-label">IDX</span>
+      <span class="dp-idx-val">—</span>
+    </div>
+    <div class="dp-float dp-year" data-key="year">—</div>
+    <div class="dp-float dp-desc" data-key="desc">—</div>
+
+    <!-- Bottom bar: prev — close — next, igloo-style minimal text -->
+    <div class="dp-bar">
+      <button type="button" class="dp-nav dp-nav-prev">‹ PREV</button>
+      <button type="button" class="dp-close">CLOSE</button>
+      <button type="button" class="dp-nav dp-nav-next">NEXT ›</button>
+    </div>
+    <div class="dp-hint">scroll or esc to exit</div>
+  </aside>
+
+  <script type="module" src="/src/interactive.js"></script>
+</body>
+
+</html>

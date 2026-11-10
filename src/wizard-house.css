@@ -1,0 +1,31 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; }
+body { overflow: hidden; background: #87ceeb; font-family: system-ui, sans-serif; }
+canvas { display: block; }
+
+.nav-link {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 10;
+  color: #fff;
+  font-size: 14px;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 8px 14px;
+  border-radius: 999px;
+  text-decoration: none;
+  backdrop-filter: blur(6px);
+}
+.nav-link:hover { background: rgba(0, 0, 0, 0.6); }
+
+.title {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 10;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
